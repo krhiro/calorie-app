@@ -193,6 +193,19 @@ body { font-family: 'Noto Sans JP', sans-serif; background: var(--bg); color: va
 .custom-item:last-child { border-bottom: none; }
 .custom-name { flex: 1; font-weight: 500; }
 .custom-kcal { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--accent2); }
+
+/* 直接入力ボタン */
+.quick-add-btn { display: flex; align-items: center; justify-content: center; gap: 7px; width: calc(100% - 26px); margin: 0 13px 13px; background: none; border: 1px dashed var(--border); border-radius: 10px; padding: 11px 14px; font-size: 13px; color: var(--muted); cursor: pointer; font-family: 'Noto Sans JP', sans-serif; transition: border-color .2s, color .2s; }
+.quick-add-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+.quick-add-btn .qi { font-size: 16px; }
+
+/* 直接入力モーダル内プレビュー */
+.qa-preview { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 11px 14px; margin-bottom: 12px; display: none; }
+.qa-preview.show { display: flex; align-items: center; justify-content: space-between; }
+.qa-preview-name { font-size: 13px; font-weight: 500; color: var(--accent); }
+.qa-preview-kcal { font-family: 'DM Mono', monospace; font-size: 18px; font-weight: 500; color: var(--accent); }
+.qa-macro-row { display: flex; gap: 6px; margin-top: 8px; }
+.qa-optional { font-size: 10px; color: var(--muted); margin: 2px 0 7px; }
 </style>
 </head>
 <body>
@@ -249,6 +262,9 @@ body { font-family: 'Noto Sans JP', sans-serif; background: var(--bg); color: va
         <button class="add-btn" onclick="addFood()">追加 +</button>
       </div>
     </div>
+    <button class="quick-add-btn" onclick="openQuickAddModal()">
+      <span class="qi">✏️</span>食品名・カロリーを直接入力して追加
+    </button>
   </div>
 
   <div class="sec">
@@ -426,6 +442,47 @@ body { font-family: 'Noto Sans JP', sans-serif; background: var(--bg); color: va
     <div class="modal-actions">
       <button class="modal-cancel" onclick="closeModal('confirm-modal')">キャンセル</button>
       <button id="confirm-ok" style="flex:2; background:#e2453a; border:none; border-radius:10px; padding:12px; color:#fff; font-size:13px; font-weight:700; cursor:pointer; font-family:'Noto Sans JP',sans-serif;">削除する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 直接入力モーダル -->
+<div class="modal-overlay" id="quick-add-modal" onclick="closeIf(event,'quick-add-modal')">
+  <div class="modal">
+    <div class="modal-title">✏️ 直接入力して追加</div>
+    <input type="text" class="modal-input" id="qa-name" placeholder="食品名（例: コンビニ弁当、手作りケーキ）" oninput="updateQaPreview()">
+    <div class="modal-grid">
+      <div class="modal-field" style="grid-column:1/-1">
+        <label>カロリー (kcal) *</label>
+        <input type="number" class="modal-input" id="qa-kcal" placeholder="例: 350" style="margin:0" oninput="updateQaPreview()" min="0">
+      </div>
+    </div>
+    <div class="qa-preview" id="qa-preview">
+      <div>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:2px;">追加するカロリー</div>
+        <div class="qa-preview-kcal"><span id="qa-preview-kcal-val">0</span> <span style="font-size:12px;color:var(--muted)">kcal</span></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;" id="qa-preview-name-val"></div>
+      </div>
+      <div style="font-size:28px;opacity:0.3">🍽️</div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin:4px 0 10px;">▼ 栄養素（任意）</div>
+    <div class="modal-grid">
+      <div class="modal-field">
+        <label>タンパク質 (g)</label>
+        <input type="number" class="modal-input" id="qa-p" placeholder="例: 12.0" style="margin:0" min="0" step="0.1">
+      </div>
+      <div class="modal-field">
+        <label>脂質 (g)</label>
+        <input type="number" class="modal-input" id="qa-f" placeholder="例: 8.5" style="margin:0" min="0" step="0.1">
+      </div>
+      <div class="modal-field" style="grid-column:1/-1">
+        <label>炭水化物 (g)</label>
+        <input type="number" class="modal-input" id="qa-c" placeholder="例: 45.0" style="margin:0" min="0" step="0.1">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal('quick-add-modal')">キャンセル</button>
+      <button class="modal-save" onclick="addQuickEntry()">今日の記録に追加</button>
     </div>
   </div>
 </div>
@@ -682,7 +739,7 @@ function renderToday(){
             <div class="log-name">${item.name}</div>
             <div class="log-macros"><span class="mtag p">P ${item.p}g</span><span class="mtag f">F ${item.f}g</span><span class="mtag c">C ${item.c}g</span></div>
           </div>
-          <span class="log-g">${item.g}g</span>
+          ${item._direct ? '<span class="log-g" style="color:var(--accent2);font-size:9px;">直接入力</span>' : `<span class="log-g">${item.g}g</span>`}
           <span class="log-kcal">${item.kcal} kcal</span>
           <button class="del-btn" onclick="removeItem(${item.id})">×</button>
         </div>`);
@@ -960,6 +1017,51 @@ function renderThemeGrid(){
       <div style="width:28px;height:28px;border-radius:50%;background:${t.accent};margin:0 auto 7px;"></div>
       <div style="font-size:10px;color:${t.name===saved?t.accent:'#7a7a70'};line-height:1.3;">${t.name}</div>
     </div>`).join('');
+}
+
+// ── 直接入力追加 ──
+function openQuickAddModal(){
+  document.getElementById('qa-name').value='';
+  document.getElementById('qa-kcal').value='';
+  document.getElementById('qa-p').value='';
+  document.getElementById('qa-f').value='';
+  document.getElementById('qa-c').value='';
+  document.getElementById('qa-preview').classList.remove('show');
+  document.getElementById('quick-add-modal').classList.add('show');
+  setTimeout(()=>document.getElementById('qa-name').focus(),100);
+}
+function updateQaPreview(){
+  const name = document.getElementById('qa-name').value.trim();
+  const kcal = parseFloat(document.getElementById('qa-kcal').value);
+  const preview = document.getElementById('qa-preview');
+  if(name && kcal > 0){
+    document.getElementById('qa-preview-kcal-val').textContent = Math.round(kcal);
+    document.getElementById('qa-preview-name-val').textContent = name;
+    preview.classList.add('show');
+  } else {
+    preview.classList.remove('show');
+  }
+}
+function addQuickEntry(){
+  const name = document.getElementById('qa-name').value.trim();
+  const kcal = parseFloat(document.getElementById('qa-kcal').value);
+  if(!name){ alert('食品名を入力してください'); return; }
+  if(!kcal || kcal <= 0){ alert('カロリーを入力してください'); return; }
+  const p = parseFloat(document.getElementById('qa-p').value) || 0;
+  const f = parseFloat(document.getElementById('qa-f').value) || 0;
+  const c = parseFloat(document.getElementById('qa-c').value) || 0;
+  todayLog.push({
+    id: Date.now()+Math.random(),
+    name,
+    g: 0,
+    kcal: Math.round(kcal),
+    p: r1(p), f: r1(f), c: r1(c),
+    recipeGroup: null,
+    _direct: true
+  });
+  save('log_'+TODAY, todayLog);
+  renderToday();
+  closeModal('quick-add-modal');
 }
 
 function renderSettings(){
