@@ -1,7 +1,8 @@
-const CACHE = 'calorie-app-v2';
+const CACHE = 'calorie-app-v3';
 const ASSETS = [
   './',
   './index.html',
+  './foods.json',
   './manifest.json',
   './icon-192.svg',
   './icon-512.svg',

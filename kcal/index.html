@@ -194,6 +194,16 @@ body { font-family: 'Noto Sans JP', sans-serif; background: var(--bg); color: va
 .custom-name { flex: 1; font-weight: 500; }
 .custom-kcal { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--accent2); }
 
+/* 目標プログレスバー */
+.goal-bar-wrap { margin-top: 7px; }
+.goal-row { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
+.goal-label { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); width: 26px; text-transform: uppercase; }
+.goal-track { flex: 1; height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+.goal-fill { height: 100%; border-radius: 3px; transition: width .4s ease, background .3s; }
+.goal-pct { font-family: 'DM Mono', monospace; font-size: 9px; min-width: 32px; text-align: right; }
+.goal-fraction { font-family: 'DM Mono', monospace; font-size: 10px; margin-top: 2px; }
+.scard.main .goal-bar-wrap { width: 100%; margin-top: 10px; }
+
 /* 直接入力ボタン */
 .quick-add-btn { display: flex; align-items: center; justify-content: center; gap: 7px; width: calc(100% - 26px); margin: 0 13px 13px; background: none; border: 1px dashed var(--border); border-radius: 10px; padding: 11px 14px; font-size: 13px; color: var(--muted); cursor: pointer; font-family: 'Noto Sans JP', sans-serif; transition: border-color .2s, color .2s; }
 .quick-add-btn:hover { border-color: var(--accent2); color: var(--accent2); }
@@ -219,27 +229,51 @@ body { font-family: 'Noto Sans JP', sans-serif; background: var(--bg); color: va
 
   <div class="summary-grid">
     <div class="scard cal main">
-      <div>
+      <div style="flex:1">
         <div class="clabel">Total Calories</div>
         <div class="cval" id="tot-kcal">0</div>
-        <div class="cunit">kcal / 今日</div>
+        <div class="cunit" id="tot-kcal-sub">kcal / 今日</div>
+        <div class="goal-bar-wrap" id="goal-bar-kcal" style="display:none">
+          <div class="goal-row">
+            <div class="goal-track"><div class="goal-fill" id="gfill-kcal"></div></div>
+            <div class="goal-pct" id="gpct-kcal"></div>
+          </div>
+        </div>
       </div>
       <div class="cal-icon">🔥</div>
     </div>
     <div class="scard pro">
       <div class="clabel">Protein</div>
       <div class="cval" id="tot-p" style="color:var(--protein)">0</div>
-      <div class="cunit">g タンパク質</div>
+      <div class="cunit" id="tot-p-sub">g タンパク質</div>
+      <div class="goal-bar-wrap" id="goal-bar-p" style="display:none">
+        <div class="goal-row">
+          <div class="goal-track"><div class="goal-fill" id="gfill-p"></div></div>
+          <div class="goal-pct" id="gpct-p"></div>
+        </div>
+      </div>
     </div>
     <div class="scard fat">
       <div class="clabel">Fat</div>
       <div class="cval" id="tot-f" style="color:var(--fat)">0</div>
-      <div class="cunit">g 脂質</div>
+      <div class="cunit" id="tot-f-sub">g 脂質</div>
+      <div class="goal-bar-wrap" id="goal-bar-f" style="display:none">
+        <div class="goal-row">
+          <div class="goal-track"><div class="goal-fill" id="gfill-f"></div></div>
+          <div class="goal-pct" id="gpct-f"></div>
+        </div>
+      </div>
     </div>
     <div class="scard carb">
       <div class="clabel">Carbs</div>
       <div class="cval" id="tot-c" style="color:var(--carb)">0</div>
-      <div class="cunit">g 炭水化物</div>
+      <div class="cunit" id="tot-c-sub">g 炭水化物</div>
+      <div class="goal-bar-wrap" id="goal-bar-c" style="display:none">
+        <div class="goal-row">
+          <div class="goal-track"><div class="goal-fill" id="gfill-c"></div></div>
+          <div class="goal-pct" id="gpct-c"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -330,6 +364,32 @@ body { font-family: 'Noto Sans JP', sans-serif; background: var(--bg); color: va
   <div class="page-header">
     <div class="logo">Nutrition Tracker</div>
     <div class="page-title">その他<span>設定</span></div>
+  </div>
+
+  <!-- 目標設定 -->
+  <div class="sec" style="margin-bottom:12px">
+    <div class="sec-head"><span class="sec-label">目標設定</span></div>
+    <div style="padding:14px 16px;">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">0のままにすると目標バーは非表示になります</div>
+      <div class="modal-grid">
+        <div class="modal-field" style="grid-column:1/-1">
+          <label>目標カロリー (kcal)</label>
+          <input type="number" class="modal-input" id="goal-kcal" placeholder="例: 2200" style="margin:0" min="0" oninput="saveGoals()">
+        </div>
+        <div class="modal-field">
+          <label>タンパク質 (g)</label>
+          <input type="number" class="modal-input" id="goal-p" placeholder="例: 150" style="margin:0" min="0" oninput="saveGoals()">
+        </div>
+        <div class="modal-field">
+          <label>脂質 (g)</label>
+          <input type="number" class="modal-input" id="goal-f" placeholder="例: 70" style="margin:0" min="0" oninput="saveGoals()">
+        </div>
+        <div class="modal-field" style="grid-column:1/-1">
+          <label>炭水化物 (g)</label>
+          <input type="number" class="modal-input" id="goal-c" placeholder="例: 250" style="margin:0" min="0" oninput="saveGoals()">
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- テーマカラー -->
@@ -488,119 +548,11 @@ body { font-family: 'Noto Sans JP', sans-serif; background: var(--bg); color: va
 </div>
 
 <script>
-const MASTER = [
-  // ── 穀類 ──
-  {name:'白米（炊飯）',kcal:156,p:2.5,f:0.3,c:35.6},{name:'玄米（炊飯）',kcal:152,p:2.8,f:1.0,c:34.2},
-  {name:'もち米（炊飯）',kcal:187,p:3.2,f:0.4,c:44.0},{name:'おかゆ（白米）',kcal:65,p:1.1,f:0.1,c:15.1},
-  {name:'食パン',kcal:248,p:8.9,f:4.1,c:44.4},{name:'ロールパン',kcal:309,p:10.1,f:9.0,c:48.6},
-  {name:'クロワッサン',kcal:406,p:8.1,f:24.1,c:43.9},{name:'フランスパン',kcal:289,p:9.4,f:1.3,c:57.5},
-  {name:'うどん（茹で）',kcal:95,p:2.6,f:0.4,c:20.8},{name:'そば（茹で）',kcal:130,p:4.8,f:1.0,c:26.0},
-  {name:'パスタ（茹で）',kcal:149,p:5.4,f:0.9,c:30.3},{name:'ラーメン（茹で）',kcal:149,p:4.9,f:0.6,c:32.9},
-  {name:'そうめん（茹で）',kcal:114,p:3.5,f:0.4,c:25.8},{name:'オートミール',kcal:350,p:13.7,f:5.7,c:69.1},
-  {name:'コーンフレーク',kcal:381,p:7.8,f:1.7,c:83.6},{name:'春雨（茹で）',kcal:80,p:0.1,f:0.1,c:19.5},
-  // ── 肉類 ──
-  {name:'鶏むね肉（皮なし）',kcal:105,p:23.3,f:1.9,c:0},{name:'鶏もも肉（皮なし）',kcal:127,p:19.0,f:5.0,c:0},
-  {name:'鶏もも肉（皮あり）',kcal:190,p:16.6,f:14.2,c:0},{name:'鶏ささみ',kcal:98,p:23.0,f:0.8,c:0},
-  {name:'鶏手羽先',kcal:207,p:17.4,f:16.2,c:0},{name:'鶏レバー',kcal:100,p:18.9,f:3.1,c:0.6},
-  {name:'豚ロース',kcal:263,p:19.3,f:19.2,c:0.2},{name:'豚バラ',kcal:366,p:14.4,f:35.4,c:0.1},
-  {name:'豚ひれ',kcal:115,p:22.2,f:3.7,c:0.3},{name:'豚もも',kcal:183,p:20.5,f:10.7,c:0.2},
-  {name:'豚レバー',kcal:114,p:20.4,f:3.4,c:2.5},{name:'豚ミンチ',kcal:209,p:17.7,f:17.2,c:0},
-  {name:'牛ロース',kcal:380,p:13.8,f:37.4,c:0.2},{name:'牛もも',kcal:176,p:21.3,f:10.7,c:0.3},
-  {name:'牛ひき肉',kcal:272,p:17.1,f:21.1,c:0.3},{name:'牛レバー',kcal:119,p:19.6,f:3.7,c:3.7},
-  {name:'牛タン',kcal:269,p:15.2,f:24.1,c:0.2},{name:'ラム（もも）',kcal:198,p:20.0,f:12.7,c:0.3},
-  // ── 魚介類 ──
-  {name:'サーモン（生）',kcal:139,p:20.1,f:6.1,c:0.1},{name:'マグロ（赤身）',kcal:115,p:26.4,f:0.8,c:0.1},
-  {name:'マグロ（中トロ）',kcal:249,p:20.1,f:19.2,c:0.1},{name:'タラ（生）',kcal:72,p:17.6,f:0.2,c:0.1},
-  {name:'サバ（生）',kcal:202,p:20.6,f:12.1,c:0.3},{name:'サバ缶（水煮）',kcal:174,p:20.9,f:10.7,c:0.2},
-  {name:'イワシ（生）',kcal:156,p:19.2,f:9.2,c:0.2},{name:'アジ（生）',kcal:112,p:19.7,f:4.5,c:0.1},
-  {name:'ブリ（生）',kcal:222,p:21.4,f:17.6,c:0.3},{name:'カツオ（生）',kcal:108,p:25.8,f:0.5,c:0.1},
-  {name:'エビ（生）',kcal:98,p:19.8,f:1.5,c:0.1},{name:'イカ（生）',kcal:83,p:17.9,f:0.8,c:0.4},
-  {name:'タコ（生）',kcal:70,p:16.4,f:0.7,c:0.1},{name:'ホタテ（生）',kcal:66,p:13.5,f:0.9,c:1.5},
-  {name:'アサリ（生）',kcal:27,p:6.0,f:0.3,c:0.4},{name:'シジミ（生）',kcal:54,p:7.5,f:1.4,c:4.5},
-  {name:'カニ（生）',kcal:59,p:15.0,f:0.3,c:0.1},{name:'ツナ缶（水煮）',kcal:97,p:22.3,f:0.8,c:0},
-  {name:'さば缶（みそ煮）',kcal:204,p:16.3,f:13.9,c:6.6},{name:'シャケ（塩）',kcal:193,p:22.4,f:11.1,c:0.1},
-  // ── 卵・大豆製品 ──
-  {name:'卵（全卵）',kcal:142,p:12.3,f:10.3,c:0.4},{name:'卵白',kcal:47,p:10.5,f:0,c:0.4},
-  {name:'卵黄',kcal:336,p:16.5,f:30.9,c:0.1},{name:'温泉卵',kcal:79,p:6.8,f:5.7,c:0.2},
-  {name:'豆腐（木綿）',kcal:72,p:6.6,f:4.2,c:1.6},{name:'豆腐（絹ごし）',kcal:56,p:5.3,f:3.0,c:2.0},
-  {name:'納豆',kcal:190,p:16.5,f:10.0,c:12.1},{name:'厚揚げ',kcal:143,p:10.7,f:11.3,c:0.2},
-  {name:'油揚げ',kcal:354,p:15.3,f:34.4,c:0.4},{name:'おから（生）',kcal:88,p:6.1,f:3.6,c:13.8},
-  {name:'豆乳（無調整）',kcal:44,p:3.6,f:2.0,c:3.1},{name:'大豆（茹で）',kcal:163,p:14.8,f:9.8,c:8.4},
-  {name:'枝豆（茹で）',kcal:118,p:11.5,f:6.1,c:8.8},{name:'高野豆腐',kcal:496,p:50.5,f:34.1,c:1.7},
-  // ── 乳製品 ──
-  {name:'牛乳',kcal:61,p:3.3,f:3.8,c:4.8},{name:'低脂肪牛乳',kcal:42,p:3.8,f:1.0,c:5.5},
-  {name:'ヨーグルト（無糖）',kcal:62,p:3.6,f:3.0,c:4.9},{name:'ヨーグルト（加糖）',kcal:67,p:4.3,f:0.2,c:12.2},
-  {name:'チーズ（プロセス）',kcal:313,p:22.7,f:26.0,c:1.3},{name:'カマンベール',kcal:291,p:19.1,f:24.7,c:0.9},
-  {name:'カッテージチーズ',kcal:99,p:13.3,f:4.5,c:1.9},{name:'モッツァレラ',kcal:269,p:18.4,f:19.9,c:4.2},
-  {name:'バター',kcal:745,p:0.5,f:81.0,c:0.2},{name:'生クリーム（乳脂肪）',kcal:404,p:2.0,f:45.0,c:3.1},
-  // ── 野菜類 ──
-  {name:'キャベツ',kcal:21,p:1.3,f:0.2,c:5.2},{name:'ほうれん草',kcal:20,p:2.2,f:0.4,c:3.1},
-  {name:'ブロッコリー',kcal:37,p:4.3,f:0.5,c:6.6},{name:'カリフラワー',kcal:28,p:3.0,f:0.1,c:5.2},
-  {name:'トマト',kcal:19,p:0.7,f:0.1,c:4.7},{name:'ミニトマト',kcal:29,p:1.1,f:0.1,c:7.2},
-  {name:'きゅうり',kcal:13,p:1.0,f:0.1,c:3.0},{name:'ニンジン',kcal:35,p:0.7,f:0.1,c:9.3},
-  {name:'タマネギ',kcal:33,p:1.0,f:0.1,c:8.8},{name:'長ネギ',kcal:28,p:1.4,f:0.1,c:7.2},
-  {name:'じゃがいも',kcal:59,p:1.8,f:0.1,c:17.3},{name:'さつまいも',kcal:126,p:1.2,f:0.2,c:33.1},
-  {name:'里芋',kcal:53,p:1.5,f:0.1,c:13.1},{name:'長いも',kcal:64,p:2.2,f:0.3,c:16.9},
-  {name:'かぼちゃ',kcal:49,p:1.9,f:0.3,c:17.1},{name:'なす',kcal:18,p:1.1,f:0.1,c:5.1},
-  {name:'ピーマン',kcal:20,p:0.9,f:0.2,c:5.1},{name:'パプリカ（赤）',kcal:30,p:1.0,f:0.2,c:7.2},
-  {name:'もやし',kcal:15,p:1.7,f:0.1,c:2.6},{name:'レタス',kcal:11,p:0.6,f:0.1,c:2.8},
-  {name:'サニーレタス',kcal:15,p:1.2,f:0.2,c:2.8},{name:'アボカド',kcal:176,p:2.1,f:17.5,c:7.9},
-  {name:'ごぼう',kcal:58,p:1.8,f:0.1,c:15.4},{name:'れんこん',kcal:66,p:1.9,f:0.1,c:16.4},
-  {name:'大根',kcal:15,p:0.5,f:0.1,c:3.4},{name:'白菜',kcal:13,p:0.8,f:0.1,c:3.2},
-  {name:'小松菜',kcal:13,p:1.5,f:0.2,c:2.4},{name:'チンゲン菜',kcal:9,p:0.6,f:0.1,c:2.0},
-  {name:'アスパラガス',kcal:21,p:2.6,f:0.2,c:3.9},{name:'セロリ',kcal:12,p:0.4,f:0.1,c:3.6},
-  {name:'にんにく',kcal:129,p:6.4,f:0.9,c:27.5},{name:'しょうが',kcal:28,p:0.9,f:0.3,c:6.6},
-  {name:'えのきだけ',kcal:22,p:2.7,f:0.2,c:7.6},{name:'しいたけ',kcal:23,p:3.0,f:0.4,c:6.4},
-  {name:'しめじ',kcal:17,p:2.7,f:0.5,c:4.8},{name:'まいたけ',kcal:16,p:2.0,f:0.5,c:4.4},
-  {name:'えりんぎ',kcal:31,p:2.8,f:0.4,c:8.3},{name:'なめこ',kcal:14,p:1.7,f:0.3,c:5.0},
-  // ── 果物 ──
-  {name:'バナナ',kcal:93,p:1.1,f:0.2,c:24.4},{name:'りんご',kcal:53,p:0.2,f:0.2,c:15.5},
-  {name:'みかん',kcal:49,p:0.7,f:0.1,c:13.3},{name:'オレンジ',kcal:48,p:1.0,f:0.1,c:12.0},
-  {name:'グレープフルーツ',kcal:40,p:0.7,f:0.1,c:9.6},{name:'いちご',kcal:31,p:0.9,f:0.1,c:8.5},
-  {name:'ぶどう',kcal:58,p:0.4,f:0.1,c:16.9},{name:'すいか',kcal:41,p:0.6,f:0.1,c:11.3},
-  {name:'もも',kcal:38,p:0.6,f:0.1,c:10.2},{name:'キウイフルーツ',kcal:51,p:1.0,f:0.1,c:13.5},
-  {name:'マンゴー',kcal:68,p:0.6,f:0.1,c:17.9},{name:'パイナップル',kcal:51,p:0.6,f:0.1,c:13.7},
-  {name:'メロン',kcal:45,p:1.0,f:0.1,c:11.3},{name:'なし',kcal:38,p:0.3,f:0.1,c:10.4},
-  {name:'柿',kcal:63,p:0.4,f:0.2,c:16.9},{name:'ブルーベリー',kcal:48,p:0.5,f:0.1,c:12.9},
-  // ── 加工食品・惣菜 ──
-  {name:'ハム',kcal:182,p:16.5,f:13.9,c:1.3},{name:'豚バラベーコン',kcal:399,p:12.9,f:39.1,c:0.3},
-  {name:'ウインナー',kcal:298,p:11.5,f:28.5,c:3.3},{name:'フランクフルト',kcal:279,p:12.7,f:25.0,c:6.2},
-  {name:'焼き鳥（塩）',kcal:177,p:21.8,f:9.3,c:1.0},{name:'焼き鳥（タレ）',kcal:188,p:21.2,f:9.0,c:5.4},
-  {name:'鶏の唐揚げ',kcal:307,p:19.6,f:22.9,c:9.7},{name:'豚の生姜焼き',kcal:260,p:20.1,f:17.5,c:5.5},
-  {name:'コロッケ',kcal:217,p:6.5,f:13.5,c:22.1},{name:'餃子（焼き）',kcal:197,p:8.3,f:10.5,c:20.4},
-  {name:'シュウマイ',kcal:193,p:10.8,f:10.5,c:16.9},{name:'春巻き',kcal:200,p:5.2,f:12.3,c:19.3},
-  {name:'おにぎり（塩）',kcal:168,p:2.7,f:0.3,c:38.5},{name:'おにぎり（鮭）',kcal:175,p:5.1,f:1.3,c:36.2},
-  {name:'チャーハン',kcal:191,p:5.5,f:6.8,c:30.4},{name:'カレーライス',kcal:179,p:5.5,f:6.0,c:28.6},
-  {name:'味噌汁（豆腐）',kcal:25,p:2.0,f:1.2,c:2.5},{name:'豚汁',kcal:55,p:3.8,f:2.8,c:5.2},
-  // ── ナッツ・種子・油脂 ──
-  {name:'アーモンド',kcal:587,p:20.3,f:51.8,c:19.7},{name:'くるみ',kcal:654,p:14.6,f:68.8,c:11.7},
-  {name:'カシューナッツ',kcal:562,p:19.8,f:47.6,c:26.7},{name:'ピーナッツ',kcal:585,p:25.4,f:49.4,c:18.8},
-  {name:'ピスタチオ',kcal:617,p:17.4,f:56.1,c:20.9},{name:'ゴマ（乾）',kcal:578,p:19.8,f:54.2,c:18.5},
-  {name:'オリーブオイル',kcal:894,p:0,f:100,c:0},{name:'ごま油',kcal:890,p:0,f:99.8,c:0},
-  {name:'サラダ油',kcal:886,p:0,f:100,c:0},{name:'マヨネーズ',kcal:668,p:1.7,f:74.7,c:2.9},
-  // ── 菓子・甘味 ──
-  {name:'チョコレート（ミルク）',kcal:550,p:6.9,f:34.1,c:55.8},{name:'ポテトチップス',kcal:541,p:4.7,f:35.2,c:54.7},
-  {name:'クッキー',kcal:493,p:6.7,f:25.5,c:63.0},{name:'プリン',kcal:116,p:5.5,f:5.8,c:13.3},
-  {name:'アイスクリーム（バニラ）',kcal:212,p:3.9,f:12.0,c:23.1},{name:'シュークリーム',kcal:224,p:6.9,f:14.9,c:19.8},
-  {name:'ショートケーキ',kcal:327,p:5.2,f:17.0,c:40.1},{name:'どら焼き',kcal:284,p:6.6,f:3.9,c:58.8},
-  {name:'大福もち',kcal:220,p:4.3,f:0.6,c:49.3},{name:'羊羹',kcal:288,p:3.1,f:0.5,c:70.0},
-  // ── 飲料 ──
-  {name:'コーヒー（ブラック）',kcal:4,p:0.3,f:0,c:0.7},{name:'緑茶',kcal:2,p:0.2,f:0,c:0.3},
-  {name:'オレンジジュース',kcal:45,p:0.7,f:0.1,c:11.0},{name:'コーラ',kcal:46,p:0.1,f:0,c:11.3},
-  {name:'スポーツドリンク',kcal:21,p:0,f:0,c:5.1},{name:'ビール',kcal:40,p:0.3,f:0,c:3.1},
-  {name:'日本酒',kcal:103,p:0.4,f:0,c:4.9},{name:'焼酎（25度）',kcal:146,p:0,f:0,c:0},
-  {name:'ワイン（赤）',kcal:68,p:0.2,f:0,c:1.5},{name:'豆乳（無調整）',kcal:44,p:3.6,f:2.0,c:3.1},
-  // ── 調味料 ──
-  {name:'砂糖',kcal:391,p:0,f:0,c:99.2},{name:'塩',kcal:0,p:0,f:0,c:0},
-  {name:'醤油（濃口）',kcal:67,p:5.7,f:0,c:10.1},{name:'みそ（米みそ）',kcal:192,p:12.1,f:5.7,c:25.0},
-  {name:'みりん',kcal:229,p:0.3,f:0,c:43.2},{name:'ケチャップ',kcal:104,p:1.6,f:0.2,c:25.9},
-  {name:'ソース（中濃）',kcal:132,p:1.1,f:0.1,c:33.2},{name:'ポン酢',kcal:49,p:2.4,f:0,c:10.2},
-];
-
 const TODAY = new Date().toISOString().slice(0,10);
 function load(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch{return d;}}
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
 
+let MASTER = [];
 let todayLog    = load('log_'+TODAY, []);
 let customFoods = load('custom_foods', []);
 let recipes     = load('recipes', [
@@ -611,6 +563,9 @@ let recipes     = load('recipes', [
 let histDate = TODAY;
 let selFood  = null;
 let modalIngs = [];
+
+// 目標
+let goals = load('goals', {kcal:0, p:0, f:0, c:0});
 
 function allFoods(){ return [...MASTER, ...customFoods.map(f=>({...f,_custom:true}))]; }
 function totals(log){ return log.reduce((a,i)=>({kcal:a.kcal+i.kcal,p:a.p+i.p,f:a.f+i.f,c:a.c+i.c}),{kcal:0,p:0,f:0,c:0}); }
@@ -699,6 +654,19 @@ function renderToday(){
   document.getElementById('tot-p').textContent = r1(t.p);
   document.getElementById('tot-f').textContent = r1(t.f);
   document.getElementById('tot-c').textContent = r1(t.c);
+
+  // 目標バー
+  renderGoalBar('kcal', t.kcal, goals.kcal, 'var(--accent)');
+  renderGoalBar('p',    r1(t.p), goals.p,    'var(--protein)');
+  renderGoalBar('f',    r1(t.f), goals.f,    'var(--fat)');
+  renderGoalBar('c',    r1(t.c), goals.c,    'var(--carb)');
+
+  // サブテキスト
+  updateGoalSub('kcal', t.kcal, goals.kcal, 'kcal / 今日');
+  updateGoalSub('p',    r1(t.p), goals.p,   'g タンパク質');
+  updateGoalSub('f',    r1(t.f), goals.f,   'g 脂質');
+  updateGoalSub('c',    r1(t.c), goals.c,   'g 炭水化物');
+
   const el = document.getElementById('food-log');
   if(!todayLog.length){el.innerHTML=`<div class="log-empty"><div class="ei">🥗</div>食品を追加してください</div>`;return;}
 
@@ -1064,9 +1032,55 @@ function addQuickEntry(){
   closeModal('quick-add-modal');
 }
 
+// ── 目標バー ──
+function renderGoalBar(key, current, goal, color){
+  const wrap = document.getElementById('goal-bar-'+key);
+  const fill = document.getElementById('gfill-'+key);
+  const pct  = document.getElementById('gpct-'+key);
+  if(!wrap) return;
+  if(!goal){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  const ratio = Math.min(current / goal, 1.2);
+  const pctVal = Math.round(current / goal * 100);
+  const barW = Math.min(ratio / 1.2 * 100, 100);
+  let barColor = color;
+  if(pctVal >= 110) barColor = 'var(--danger)';
+  else if(pctVal >= 100) barColor = 'var(--accent2)';
+  fill.style.width = barW + '%';
+  fill.style.background = barColor;
+  pct.style.color = barColor;
+  pct.textContent = pctVal + '%';
+}
+function updateGoalSub(key, current, goal, defaultText){
+  const el = document.getElementById('tot-'+key+'-sub');
+  if(!el) return;
+  if(!goal){ el.textContent = defaultText; return; }
+  const unit = key === 'kcal' ? 'kcal' : 'g';
+  el.textContent = current + ' / ' + goal + ' ' + unit;
+  const pct = Math.round(current / goal * 100);
+  if(pct >= 110) el.style.color = 'var(--danger)';
+  else if(pct >= 100) el.style.color = 'var(--accent2)';
+  else el.style.color = 'var(--muted)';
+}
+function saveGoals(){
+  goals = {
+    kcal: parseFloat(document.getElementById('goal-kcal').value)||0,
+    p:    parseFloat(document.getElementById('goal-p').value)||0,
+    f:    parseFloat(document.getElementById('goal-f').value)||0,
+    c:    parseFloat(document.getElementById('goal-c').value)||0,
+  };
+  save('goals', goals);
+  renderToday();
+}
+
 function renderSettings(){
   renderThemeGrid();
   document.getElementById('food-count').textContent = MASTER.length + customFoods.length + '品';
+  // 目標値を復元
+  document.getElementById('goal-kcal').value = goals.kcal || '';
+  document.getElementById('goal-p').value    = goals.p    || '';
+  document.getElementById('goal-f').value    = goals.f    || '';
+  document.getElementById('goal-c').value    = goals.c    || '';
   // 記録開始日
   const allKeys = [];
   for(let i=0;i<localStorage.length;i++){
@@ -1084,8 +1098,19 @@ const savedThemeName = load('theme', 'ダーク（標準）');
 const savedTheme = THEMES.find(t=>t.name===savedThemeName);
 if(savedTheme) applyTheme(savedTheme);
 
-renderToday();
-renderRecipes();
+// foods.json 読み込み → 完了後に描画
+fetch('./foods.json')
+  .then(r=>r.json())
+  .then(data=>{
+    MASTER = data;
+    renderToday();
+    renderRecipes();
+  })
+  .catch(()=>{
+    // フォールバック: 空でも動くように
+    renderToday();
+    renderRecipes();
+  });
 
 // Service Worker 登録
 if('serviceWorker' in navigator){
