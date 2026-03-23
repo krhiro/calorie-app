@@ -548,7 +548,7 @@ body { font-family: 'Noto Sans JP', sans-serif; background: var(--bg); color: va
 </div>
 
 <script>
-const TODAY = new Date().toISOString().slice(0,10);
+const TODAY = new Date(Date.now() + 9*60*60*1000).toISOString().slice(0,10);
 function load(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch{return d;}}
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
 

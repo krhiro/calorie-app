@@ -1,4 +1,4 @@
-const CACHE = 'calorie-app-v3';
+const CACHE = 'calorie-app-v4';
 const ASSETS = [
   './',
   './index.html',
